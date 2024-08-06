@@ -1,5 +1,6 @@
 import os
 import re
+import pickle
 import nltk
 from sec_edgar_downloader import Downloader
 from bs4 import BeautifulSoup
@@ -11,7 +12,7 @@ nltk.download('punkt')
 def download_sec_filings():
     downloader = Downloader("./sec-edgar-filings",email_address='hsoman3@uic.edu')
     downloader.get("10-K", "AAPL", limit=1)
-    # downloader.get("10-Q", "AAPL", amount=20)
+
 
     filings = []
     for root, dirs, files in os.walk("./sec-edgar-filings"):
@@ -64,3 +65,14 @@ def preprocess_filing(file_path, eos_token):
         chunks.append(' '.join(current_chunk))
 
     return chunks
+
+
+def save_embeddings(embeddings, file_path):
+    with open(file_path, 'wb') as f:
+        pickle.dump(embeddings, f)
+
+
+def load_embeddings(file_path):
+    with open(file_path, 'rb') as f:
+        embeddings = pickle.load(f)
+    return embeddings

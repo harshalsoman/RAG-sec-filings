@@ -2,7 +2,8 @@ import faiss
 import torch
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
-
+from data_processing import save_embeddings, load_embeddings
+import os
 
 def load_llama_model():
     model_name = 'unsloth/llama-3-8b-bnb-4bit'
@@ -22,12 +23,18 @@ def load_llama_model():
     return model, tokenizer
 
 
-def implement_rag(all_chunks):
+def implement_rag(all_chunks, embeddings_file='embeddings.pkl'):
     # Initialize embedding model
     embed_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-    # Create vector database
-    embeddings = embed_model.encode(all_chunks)
+    # Check if embeddings file exists
+    if os.path.exists(embeddings_file):
+        embeddings = load_embeddings(embeddings_file)
+    else:
+        # Create vector database
+        embeddings = embed_model.encode(all_chunks)
+        save_embeddings(embeddings, embeddings_file)
+
     dimension = embeddings.shape[1]
 
     faiss.normalize_L2(embeddings)

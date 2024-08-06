@@ -2,7 +2,8 @@ import torch
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import faiss
-
+from data_processing import save_embeddings, load_embeddings
+import os
 
 def load_google_t5_model():
     model_name = 'google/flan-t5-base'
@@ -11,12 +12,18 @@ def load_google_t5_model():
     return model, tokenizer
 
 
-def implement_rag(all_chunks):
+def implement_rag(all_chunks, embeddings_file='embeddings.pkl'):
     # Initialize embedding model
     embed_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-    # Create vector database
-    embeddings = embed_model.encode(all_chunks)
+    # Check if embeddings file exists
+    if os.path.exists(embeddings_file):
+        embeddings = load_embeddings(embeddings_file)
+    else:
+        # Create vector database
+        embeddings = embed_model.encode(all_chunks)
+        save_embeddings(embeddings, embeddings_file)
+
     dimension = embeddings.shape[1]
 
     faiss.normalize_L2(embeddings)
