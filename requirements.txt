@@ -1,0 +1,9 @@
+faiss-cpu
+sentence-transformers
+transformers
+sec-edgar-downloader
+beautifulsoup4
+nltk
+bitsandbytes
+accelerate
+streamlit
