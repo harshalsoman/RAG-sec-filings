@@ -11,7 +11,7 @@ nltk.download('punkt')
 
 def download_sec_filings():
     downloader = Downloader("./sec-edgar-filings",email_address='hsoman3@uic.edu')
-    downloader.get("10-K", "AAPL", limit=1)
+    downloader.get("10-K", "AAPL")
 
 
     filings = []
@@ -53,7 +53,6 @@ def preprocess_filing(file_path, eos_token):
     for sentence in sentences:
         words = sentence.split()
         if current_count + len(words) > 200:
-            current_chunk.append(eos_token)  # Add eos_token at the end of each chunk
             chunks.append(' '.join(current_chunk))
             current_chunk = []
             current_count = 0
@@ -61,7 +60,6 @@ def preprocess_filing(file_path, eos_token):
         current_count += len(words)
 
     if current_chunk:
-        current_chunk.append(eos_token)  # Add eos_token at the end of the last chunk
         chunks.append(' '.join(current_chunk))
 
     return chunks

@@ -51,10 +51,9 @@ def generate_response(query, context, tokenizer, model):
             max_new_tokens=200,  # Generate up to 200 new tokens
             num_return_sequences=1,
             temperature=0.7,
+            do_sample=True,
             top_k=50,
             top_p=0.95,
-            eos_token_id=tokenizer.eos_token_id,  # Ensure the model recognizes the end-of-sequence token
-            early_stopping=True  # Stop early when an end-of-sequence token is generated
         )
 
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
