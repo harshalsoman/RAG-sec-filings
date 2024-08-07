@@ -1,10 +1,8 @@
 import streamlit as st
-from model import load_llama_model, implement_rag as implement_rag_llama, retrieve as retrieve_llama, \
-    generate_response as generate_response_llama
+from model import load_llama_model,generate_response_gpt
 from google_t5_model import load_google_t5_model, implement_rag as implement_rag_t5, retrieve as retrieve_t5, \
     generate_response as generate_response_t5
-from mistral_model import load_mistral_model, implement_rag as implement_rag_mistral, retrieve as retrieve_mistral, \
-    generate_response as generate_response_mistral
+from mistral_model import load_roberta, generate_response_roberta
 from data_processing import download_sec_filings, preprocess_filing
 
 
@@ -13,25 +11,25 @@ def run_chat():
     st.title("Real-time Query-Response Chatbox")
 
     # Model selection
-    model_choice = st.selectbox("Choose a model:", ["Llama-3-8b-bnb-4bit", "Google T5", "Mistral-7b-bnb-4bit"])
+    model_choice = st.selectbox("Choose a model:", ["Llama-3-8b-bnb-4bit", "Google T5", "Roberta"])
 
     @st.cache_resource
     def load_model_and_rag(model_choice):
         if model_choice == "Llama-3-8b-bnb-4bit":
             model, tokenizer = load_llama_model()
-            implement_rag = implement_rag_llama
-            retrieve = retrieve_llama
-            generate_response = generate_response_llama
+            implement_rag = implement_rag_t5
+            retrieve = retrieve_t5
+            generate_response = generate_response_gpt
         elif model_choice == "Google T5":
             model, tokenizer = load_google_t5_model()
             implement_rag = implement_rag_t5
             retrieve = retrieve_t5
             generate_response = generate_response_t5
         else:
-            model, tokenizer = load_mistral_model()
-            implement_rag = implement_rag_mistral
-            retrieve = retrieve_mistral
-            generate_response = generate_response_mistral
+            model, tokenizer = load_roberta()
+            implement_rag = implement_rag_t5
+            retrieve = retrieve_t5
+            generate_response = generate_response_roberta
 
         eos_token = tokenizer.eos_token
 

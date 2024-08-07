@@ -1,25 +1,27 @@
 import faiss
 import torch
 from sentence_transformers import SentenceTransformer
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM
 from data_processing import save_embeddings, load_embeddings
 import os
 
+MODEL_DIR = "saved_models/distilgpt2"
+
+def save_model(model, tokenizer, model_dir=MODEL_DIR):
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+    model.save_pretrained(model_dir)
+    tokenizer.save_pretrained(model_dir)
+
 def load_llama_model():
-    model_name = 'unsloth/llama-3-8b-bnb-4bit'
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type='nf4',
-        bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_use_double_quant=False,
-    )
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        quantization_config=bnb_config,
-        device_map='auto',
-        trust_remote_code=True,
-    )
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model_name = 'distilgpt2'
+    if os.path.exists(MODEL_DIR):
+        model = AutoModelForCausalLM.from_pretrained(MODEL_DIR)
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        save_model(model, tokenizer)
     return model, tokenizer
 
 
@@ -52,9 +54,9 @@ def retrieve(query, embed_model, index, chunks, k=5):
     return [chunks[i] for i in indices[0]]
 
 
-def generate_response(query, context, tokenizer, model):
+def generate_response_gpt(query, context, tokenizer, model):
     prompt = f"Query: {query}\nContext: {context}\nAnswer:"
-    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024).to(model.device)
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512).to(model.device)
 
     with torch.no_grad():
         outputs = model.generate(
@@ -62,10 +64,10 @@ def generate_response(query, context, tokenizer, model):
             max_new_tokens=200,  # Generate up to 200 new tokens
             num_return_sequences=1,
             temperature=0.7,
+            do_sample=True,
             top_k=50,
-            top_p=0.95,
-            eos_token_id=tokenizer.eos_token_id,  # Ensure the model recognizes the end-of-sequence token
-            early_stopping=True  # Stop early when an end-of-sequence token is generated
+            top_p=0.95
+              # Stop early when an end-of-sequence token is generated
         )
 
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)

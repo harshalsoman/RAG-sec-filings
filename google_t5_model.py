@@ -5,10 +5,23 @@ import faiss
 from data_processing import save_embeddings, load_embeddings
 import os
 
+MODEL_DIR = "saved_models/google_t5"
+
+def save_model(model, tokenizer, model_dir=MODEL_DIR):
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+    model.save_pretrained(model_dir)
+    tokenizer.save_pretrained(model_dir)
+
 def load_google_t5_model():
     model_name = 'google/flan-t5-base'
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    if os.path.exists(MODEL_DIR):
+        model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_DIR)
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
+    else:
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        save_model(model, tokenizer)
     return model, tokenizer
 
 
@@ -54,6 +67,7 @@ def generate_response(query, context, tokenizer, model):
             do_sample=True,
             top_k=50,
             top_p=0.95,
+
         )
 
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
