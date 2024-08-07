@@ -1,21 +1,22 @@
 import streamlit as st
-from model import load_llama_model,generate_response_gpt
+from gpt2 import load_llama_model,generate_response_gpt
 from google_t5_model import load_google_t5_model, implement_rag as implement_rag_t5, retrieve as retrieve_t5, \
     generate_response as generate_response_t5
-from mistral_model import load_roberta, generate_response_roberta
-from data_processing import download_sec_filings, preprocess_filing
-
+from roberta import load_roberta, generate_response_roberta
+from data_processing import download_sec_filings, preprocess_filing, save_chunks,load_chunks
+import os
+CHUNKS_FILE = "saved_chunks.pkl"
 
 def run_chat():
     # Streamlit app
     st.title("Real-time Query-Response Chatbox")
 
     # Model selection
-    model_choice = st.selectbox("Choose a model:", ["Llama-3-8b-bnb-4bit", "Google T5", "Roberta"])
+    model_choice = st.selectbox("Choose a model:", ["Distilgpt2", "Google T5", "Roberta"])
 
     @st.cache_resource
     def load_model_and_rag(model_choice):
-        if model_choice == "Llama-3-8b-bnb-4bit":
+        if model_choice == "Distilgpt2":
             model, tokenizer = load_llama_model()
             implement_rag = implement_rag_t5
             retrieve = retrieve_t5
@@ -33,11 +34,15 @@ def run_chat():
 
         eos_token = tokenizer.eos_token
 
-        # Download and preprocess filings
-        filings = download_sec_filings()
-        all_chunks = []
-        for filing in filings:
-            all_chunks.extend(preprocess_filing(filing, eos_token))
+        # Load or download and preprocess filings
+        if os.path.exists(CHUNKS_FILE):
+            all_chunks = load_chunks(CHUNKS_FILE)
+        else:
+            filings = download_sec_filings()
+            all_chunks = []
+            for filing in filings:
+                all_chunks.extend(preprocess_filing(filing, eos_token))
+            save_chunks(all_chunks, CHUNKS_FILE)
 
         print(f'Total chunks created: {len(all_chunks)}')
 

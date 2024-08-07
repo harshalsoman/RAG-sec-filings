@@ -64,6 +64,14 @@ def preprocess_filing(file_path, eos_token):
 
     return chunks
 
+def save_chunks(chunks, file_path):
+    with open(file_path, 'wb') as f:
+        pickle.dump(chunks, f)
+
+def load_chunks(file_path):
+    with open(file_path, 'rb') as f:
+        chunks = pickle.load(f)
+    return chunks
 
 def save_embeddings(embeddings, file_path):
     with open(file_path, 'wb') as f:
